@@ -3,6 +3,13 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'redux/react';
 import { default as LRU } from 'lru-cache';
 
+function normalizeQuery(query) {
+  return query
+    .replace(/  +/, " ")
+    .replace(/^ +/, "")
+    .replace(/ +$/, "")
+}
+
 
 class SongDB {
   constructor() {
@@ -15,15 +22,8 @@ class SongDB {
     this.query();
   }
 
-  normalizeQuery(query) {
-    return query
-      .replace(/  +/, " ")
-      .replace(/^ +/, "")
-      .replace(/ +$/, "")
-  }
-
   query(query="") {
-    query = this.normalizeQuery(query);
+    query = normalizeQuery(query);
     this.currentQuery = query;
     var cached = this.cache.get(query);
     if (cached !== undefined) {
@@ -85,7 +85,41 @@ class SongDB {
   }
 }
 
-export default class SearchApp extends Component {
+export var stores = {
+  search: function(state, action) {
+    console.log("search:", state, action);
+    switch (action.type) {
+    case "@@INIT":
+      return {
+        db: new SongDB(),
+      };
+    case "SEARCH_QUERYING":
+      return {
+        status: 
+        query: action.query,
+        ...state
+      };
+    }
+  },
+};
+
+var SearchActions = {
+  query: function(str) {
+    var query = normalizeQuery(str);
+    return function(dispatch, getState) {
+      var ss = getState().search;
+      dispatch({
+        type: "SEARCH_QUERYING",
+        query: query,
+      });
+    };
+  },
+};
+
+@connect(state => ({
+  search: state.search,
+}))
+export class SearchApp extends Component {
   constructor() {
     super();
     this.songdb = new SongDB();
@@ -97,6 +131,7 @@ export default class SearchApp extends Component {
 
   render() {
     var db = this.songdb;
+    var actions = bindActionCreators(SearchActions, this.props.dispatch);
     return (
       <div className="search">
         <div className="query-container">
@@ -119,6 +154,6 @@ export default class SearchApp extends Component {
   }
 
   queryChanged(event) {
-    this.songdb.query(event.target.value);
+    this.props.dispatch(SearchActions.query(event.target.value));
   }
 }

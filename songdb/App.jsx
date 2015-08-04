@@ -3,12 +3,17 @@ import React, { Component } from 'react';
 import { Provider } from 'redux/react';
 import { createRedux } from 'redux';
 
-import * as stores from './stores';
-
-import CounterApp from './Counter';
-import SearchApp from './Search';
+import * as Counter from './Counter';
+import * as Search from './Search';
 
 require('./style.less');
+
+var stores = {
+  ...Counter.stores,
+  ...Search.stores,
+};
+
+console.log("stores:", Object.keys(stores));
 
 const redux = createRedux(stores);
 
@@ -26,7 +31,8 @@ export default class App extends Component {
 function getRoutes(history) {
   return (
     <Router history={history}>
-      <Route path="/" component={SearchApp} />
+      <Route path="counter" component={Counter.CounterApp} />
+      <Route path="/" component={Search.SearchApp} />
     </Router>
   )
 }

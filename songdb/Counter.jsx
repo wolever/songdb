@@ -3,18 +3,16 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'redux/react';
 
 
-import { INCREMENT_COUNTER, DECREMENT_COUNTER } from 'songdb/constants/ActionTypes';
-
 var actions = {
   increment: function() {
     return {
-      type: INCREMENT_COUNTER
+      type: 'INCREMENT_COUNTER',
     };
   },
 
   decrement: function() {
     return {
-      type: DECREMENT_COUNTER
+      type: 'DECREMENT_COUNTER',
     };
   },
 
@@ -35,6 +33,19 @@ var actions = {
       setTimeout(() => {
         dispatch(increment());
       }, 1000);
+    };
+  },
+};
+
+export var stores = {
+  counter: function(state = 0, action) {
+    switch (action.type) {
+    case 'INCREMENT_COUNTER':
+      return state + 1;
+    case 'DECREMENT_COUNTER':
+      return state - 1;
+    default:
+      return state;
     };
   },
 };
@@ -66,9 +77,10 @@ export class Counter extends Component {
 @connect(state => ({
   counter: state.counter,
 }))
-export default class CounterApp extends Component {
+export class CounterApp extends Component {
   render() {
     const { counter, dispatch } = this.props;
+    console.log(this.props);
     return (
       <Counter counter={counter} {...bindActionCreators(actions, dispatch)} />
     );
