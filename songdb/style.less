@@ -1,5 +1,48 @@
+@blue: #eff7f7;
+@focus-blue: #7af2f6; 
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: helvetica, arial, sans-serif;
+}
+
+h2 {
+  font-weight: normal;
+  text-align: center;
+  width: 80%;
+  margin: 15px auto;
+}
+
+#root, ul {
+  width: 80%;
+  margin: 0 auto;
+}
+
+li {
+  list-style: none;
+  margin: 0;
+  padding: 10px;
+  &:nth-child(odd) {
+    background: @blue;
+  }
+}
 .query-container {
+  margin-bottom: 25px;
+  &:focus {
+    outline: none;
+  }
   .query {
     width: 100%;
+    border-radius: 15px;
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    font-size: 1.5em;
+    &:focus {
+      box-shadow: 0 0 2pt 2pt @focus-blue;
+      outline: none;
+    }
   }
 }
