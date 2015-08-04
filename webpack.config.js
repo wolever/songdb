@@ -24,7 +24,7 @@ module.exports = {
   plugins: [
     new webpack.optimize.CommonsChunkPlugin('base.js', ['_dummy_base', 'app']),
     new webpack.DefinePlugin({
-      "SEARCH_API_ENDPOINT": process.env.SEARCH_API_ENDPOINT || "/api/search",
+      "SEARCH_API_ENDPOINT": JSON.stringify(process.env.SEARCH_API_ENDPOINT || "/api/search"),
     }),
   ].concat(IS_DEV? [
     new webpack.HotModuleReplacementPlugin(),
