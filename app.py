@@ -1,3 +1,4 @@
+import os
 import json
 from datetime import timedelta
 
@@ -118,5 +119,5 @@ def index():
     return open("index.html").read()
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    is_dev = not to_bool(os.environ.get("PROD"))
+    app.run(debug=is_dev, host=is_dev and "127.0.0.1" or "0.0.0.0")
