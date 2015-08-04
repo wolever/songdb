@@ -85,6 +85,30 @@ class SongDB {
   }
 }
 
+class ArtistTrackSet extends Component {
+  constructor () {
+    super();
+    this.state = { hidden: true };
+  }
+  
+  toggle() {
+    this.setState({ hidden: !this.state.hidden }); 
+     // this.setState({ hidden: !this.state.hidden });
+     // console.log('hi');
+  }
+
+  render() {
+    return (
+      <div className="set">
+        <h2 className={this.state.hidden ? "more" : "less"} onClick={::this.toggle}>{this.props.artist} ({this.props.tracks.length})</h2>
+        <ul className={this.state.hidden ? "hidden" : "show"}>{this.props.tracks.map(t => (
+          <li key={t.id}>{t.title}</li>))}
+        </ul>
+      </div>
+    );
+  }
+}
+
 export default class SearchApp extends Component {
   constructor() {
     super();
@@ -95,19 +119,36 @@ export default class SearchApp extends Component {
     };
   }
 
+  groupTracksByArtist(tracks) { 
+    var result = []; 
+    if (tracks && tracks.length) {
+      tracks.forEach(track => { 
+        var last = result[result.length - 1]; 
+        if (!last || last.artist != track.artist) { 
+          last = { artist: track.artist, tracks: [] } 
+          result.push(last); 
+        } 
+        last.tracks.push(track); 
+      });
+      return result;  
+    }
+  }
+
   render() {
     var db = this.songdb;
+    var sorted = this.groupTracksByArtist(db.matches);
+    
     return (
       <div className="search">
         <div className="query-container">
           <input className="query" onChange={::this.queryChanged} />
         </div>
-        {db.error && <div className="error">Error fetching results</div>}
-        {db.matches && <ul className="search-results">
-          {db.matches.map(r => (
-            <li key={r.id}>{r.artist}: {r.title}</li>
-          ))}
-        </ul>}
+        {sorted && sorted.error && <div className="error">Error fetching results</div>}
+        {sorted && sorted.length && <div className="search-results">
+          {sorted.map(t => 
+            React.createElement(ArtistTrackSet, { artist: t.artist, tracks: t.tracks}))}
+        </div>}
+        
       </div>
     );
   }
