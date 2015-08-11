@@ -23,9 +23,12 @@ export default class App extends Component {
   render() {
     var history = this.props.history;
     return (
-      <Provider redux={redux}>
-        {getRoutes.bind(null, history)}
-      </Provider>
+      <div>
+        <h1>An improved song database for #LoserKaraoke</h1>
+        <Provider redux={redux}>
+          {getRoutes.bind(null, history)}
+        </Provider>
+      </div>
     );
   }
 }

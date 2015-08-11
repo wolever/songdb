@@ -12,7 +12,7 @@ function normalizeQuery(query) {
 
 
 export class SongDB {
-  constructor(store) {
+  constructor() {
     this.cache = LRU({
       max: 100,
     });
@@ -114,28 +114,64 @@ export class SongDB {
   }
 }
 
+
+class ArtistTrackSet extends Component {
+  constructor () {
+    super();
+    this.state = { hidden: false };
+  }
+
+  toggle() {
+    this.setState({ hidden: !this.state.hidden });
+  }
+
+  render() {
+    return (
+      <div className="set">
+        <h2 className={this.state.hidden ? "more" : "less"} onClick={::this.toggle}>
+          {this.props.artist} ({this.props.tracks.length})
+        </h2>
+        <ul className={this.state.hidden ? "hidden" : "show"}>{this.props.tracks.map(t => (
+          <li key={t.id}>{t.title}</li>))}
+        </ul>
+      </div>
+    );
+  }
+}
+
+
 @connect(state => (console.log("here", state.search) || {
   search: state.search,
 }))
 export class SearchApp extends Component {
-  constructor() {
-    super();
+  groupTracksByArtist(tracks) {
+    var result = [];
+    tracks.forEach(track => {
+      var last = result[result.length - 1];
+      if (!last || last.artist != track.artist) {
+        last = { artist: track.artist, tracks: [] }
+        result.push(last);
+      }
+      last.tracks.push(track);
+    });
+    return result;
   }
 
   render() {
     var search = this.props.search;
-    console.log("Component saw search:", search);
+    var sorted = this.groupTracksByArtist(search.matches || []);
+
     return (
       <div className="search">
         <div className="query-container">
           <input className="query" onChange={::this.queryChanged} />
         </div>
-        {search.error && <div className="error">Error fetching results</div>}
-        {search.matches && <ul className="search-results">
-          {search.matches.map(r => (
-            <li key={r.id}>{r.artist}: {r.title}</li>
+        {!!search.error && <div className="error">Error fetching results</div>}
+        {!!sorted.length && <div className="search-results">
+          {sorted.map(t => (
+            <ArtistTrackSet key={t.tracks[0].id + t.artist} artist={t.artist} tracks={t.tracks} />
           ))}
-        </ul>}
+        </div>}
       </div>
     );
   }
