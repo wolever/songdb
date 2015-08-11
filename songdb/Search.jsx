@@ -11,8 +11,8 @@ function normalizeQuery(query) {
 }
 
 
-class SongDB {
-  constructor() {
+export class SongDB {
+  constructor(store) {
     this.cache = LRU({
       max: 100,
     });
@@ -20,6 +20,32 @@ class SongDB {
     this.state = "loading";
     this.error = null;
     this.query();
+  }
+
+  setStore(store) {
+    this.store = store;
+    if (this._lastDispatch) {
+      this.store.dispatch(this._lastDispatch);
+      delete this._lastDispatch;
+    }
+  }
+
+  getStore() {
+    return {
+      search: ::this.onDispatch,
+    };
+  }
+
+  onDispatch(state={}, action) {
+    console.log("virtual store got:", action);
+    switch (action.type) {
+      case "SEARCH":
+        console.log("virtual store returning", action);
+        return action;
+      case "SEARCH_QUERY":
+        this.query(action.query);
+    }
+    return state;
   }
 
   query(query="") {
@@ -74,72 +100,39 @@ class SongDB {
   };
 
   changed() {
-    this.watchers.forEach(watcher => watcher(this));
-  }
+    const dispatch = {
+      type: "SEARCH",
+      state: this.state,
+      error: this.error,
+      matches: this.matches,
+      query: this.currentQuery,
+    };
 
-  watch(cb) {
-    this.watchers.push(cb);
-    return () => {
-      this.watchers = this.watchers.filter(w => w !== cb);
-    }
+    setTimeout(() => {
+      this.store? this.store.dispatch(dispatch) : this._lastDispatch = dispatch;
+    }, 0);
   }
 }
 
-export var stores = {
-  search: function(state, action) {
-    console.log("search:", state, action);
-    switch (action.type) {
-    case "@@INIT":
-      return {
-        db: new SongDB(),
-      };
-    case "SEARCH_QUERYING":
-      return {
-        status: 
-        query: action.query,
-        ...state
-      };
-    }
-  },
-};
-
-var SearchActions = {
-  query: function(str) {
-    var query = normalizeQuery(str);
-    return function(dispatch, getState) {
-      var ss = getState().search;
-      dispatch({
-        type: "SEARCH_QUERYING",
-        query: query,
-      });
-    };
-  },
-};
-
-@connect(state => ({
+@connect(state => (console.log("here", state.search) || {
   search: state.search,
 }))
 export class SearchApp extends Component {
   constructor() {
     super();
-    this.songdb = new SongDB();
-    this.songdb.watch(::this.dbChanged);
-    this.state = {
-      "db": this.songdb,
-    };
   }
 
   render() {
-    var db = this.songdb;
-    var actions = bindActionCreators(SearchActions, this.props.dispatch);
+    var search = this.props.search;
+    console.log("Component saw search:", search);
     return (
       <div className="search">
         <div className="query-container">
           <input className="query" onChange={::this.queryChanged} />
         </div>
-        {db.error && <div className="error">Error fetching results</div>}
-        {db.matches && <ul className="search-results">
-          {db.matches.map(r => (
+        {search.error && <div className="error">Error fetching results</div>}
+        {search.matches && <ul className="search-results">
+          {search.matches.map(r => (
             <li key={r.id}>{r.artist}: {r.title}</li>
           ))}
         </ul>}
@@ -147,13 +140,10 @@ export class SearchApp extends Component {
     );
   }
 
-  dbChanged(db) {
-    this.setState({
-      "db": db,
-    })
-  }
-
   queryChanged(event) {
-    this.props.dispatch(SearchActions.query(event.target.value));
+    this.props.dispatch({
+      type: "SEARCH_QUERY",
+      query: event.target.value,
+    });
   }
 }

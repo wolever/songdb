@@ -8,14 +8,16 @@ import * as Search from './Search';
 
 require('./style.less');
 
+var db = new Search.SongDB();
+
 var stores = {
   ...Counter.stores,
-  ...Search.stores,
+  ...db.getStore(),
 };
 
-console.log("stores:", Object.keys(stores));
-
 const redux = createRedux(stores);
+
+db.setStore(redux);
 
 export default class App extends Component {
   render() {
