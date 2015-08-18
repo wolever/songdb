@@ -6,8 +6,6 @@ import { createRedux } from 'redux';
 import * as Counter from './Counter';
 import * as Search from './Search';
 
-require('./style.less');
-
 var db = new Search.SongDB();
 
 var stores = {
@@ -24,7 +22,6 @@ export default class App extends Component {
     var history = this.props.history;
     return (
       <div>
-        <h1>An improved song database for #LoserKaraoke</h1>
         <Provider redux={redux}>
           {getRoutes.bind(null, history)}
         </Provider>

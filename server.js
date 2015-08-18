@@ -12,7 +12,7 @@ new WebpackDevServer(webpack(config), {
   proxy: {
     "/api/*": "http://localhost:5000/",
   },
-}).listen(3000, 'localhost', function (err) {
+}).listen(3000, '0.0.0.0', function (err) {
   if (err) {
     console.log(err);
   }

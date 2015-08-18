@@ -49,6 +49,12 @@ module.exports = {
     loaders: [
       { test: /\.jsx?$/, loaders: ['react-hot', 'babel'], include: path.join(__dirname, 'songdb') },
       { test: /\.less$/, loaders: ['style', 'css', 'less'] },
+
+      { test: /bootstrap\/js\//, loader: 'imports?jQuery=jquery' },
+      { test: /\.woff2?(\?v=\d+\.\d+\.\d+)?$/, loader: "url?limit=10000&minetype=application/font-woff" },
+      { test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/, loader: "url?limit=10000&minetype=application/octet-stream" },
+      { test: /\.eot(\?v=\d+\.\d+\.\d+)?$/, loader: "file" },
+      { test: /\.svg(\?v=\d+\.\d+\.\d+)?$/, loader: "url?limit=10000&minetype=image/svg+xml" }
     ],
   }
 };

@@ -2,6 +2,7 @@ import React, { Component, PropTypes } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'redux/react';
 import { default as LRU } from 'lru-cache';
+import { default as jq } from 'jquery';
 
 function normalizeQuery(query) {
   return query
@@ -37,10 +38,8 @@ export class SongDB {
   }
 
   onDispatch(state={}, action) {
-    console.log("virtual store got:", action);
     switch (action.type) {
       case "SEARCH":
-        console.log("virtual store returning", action);
         return action;
       case "SEARCH_QUERY":
         this.query(action.query);
@@ -57,7 +56,7 @@ export class SongDB {
       return;
     };
 
-    $.getJSON(SEARCH_API_ENDPOINT + "?q=" + escape(query))
+    jq.getJSON(SEARCH_API_ENDPOINT + "?q=" + escape(query))
       .done(data => {
         this.cache.set(query, data);
         this._setMatches(query, data);
@@ -75,7 +74,7 @@ export class SongDB {
   }
 
   _queryMore(query, url) {
-    $.getJSON(url)
+    jq.getJSON(url)
       .done(data => {
         if (data.more) {
           log.error("request for more also had more?", data)
@@ -114,7 +113,6 @@ export class SongDB {
   }
 }
 
-
 class ArtistTrackSet extends Component {
   constructor () {
     super();
@@ -127,11 +125,11 @@ class ArtistTrackSet extends Component {
 
   render() {
     return (
-      <div className="set">
-        <h2 className={this.state.hidden ? "more" : "less"} onClick={::this.toggle}>
-          {this.props.artist} ({this.props.tracks.length})
-        </h2>
-        <ul className={this.state.hidden ? "hidden" : "show"}>{this.props.tracks.map(t => (
+      <div className="artist-group">
+        <h4 className={"artist " + (this.state.hidden? "less" : "more")} onClick={::this.toggle}>
+          {this.props.artist}
+        </h4>
+        <ul className={"list-unstyled " + (this.state.hidden? "hidden" : "show")}>{this.props.tracks.map(t => (
           <li key={t.id}>{t.title}</li>))}
         </ul>
       </div>
@@ -140,7 +138,7 @@ class ArtistTrackSet extends Component {
 }
 
 
-@connect(state => (console.log("here", state.search) || {
+@connect(state => ({
   search: state.search,
 }))
 export class SearchApp extends Component {
@@ -164,14 +162,20 @@ export class SearchApp extends Component {
     return (
       <div className="search">
         <div className="query-container">
-          <input className="query" onChange={::this.queryChanged} />
+          <div className="container">
+            <input className="query input-lg" onChange={::this.queryChanged} />
+          </div>
         </div>
-        {!!search.error && <div className="error">Error fetching results</div>}
-        {!!sorted.length && <div className="search-results">
-          {sorted.map(t => (
-            <ArtistTrackSet key={t.tracks[0].id + t.artist} artist={t.artist} tracks={t.tracks} />
-          ))}
-        </div>}
+        <div className="results-container container">
+          <div className="results">
+            {!!search.error && <div className="error">Error fetching results</div>}
+            {!!sorted.length && <div className="search-results">
+              {sorted.map(t => (
+                <ArtistTrackSet key={t.tracks[0].id + t.artist} artist={t.artist} tracks={t.tracks} />
+              ))}
+            </div>}
+          </div>
+        </div>
       </div>
     );
   }
