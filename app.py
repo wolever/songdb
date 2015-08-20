@@ -158,42 +158,57 @@ def tsquery_escape(term):
     return " ".join(res)
 
 
+def do_search(cur, q, limit):
+    if not q:
+        cur.execute("""
+            SELECT
+                id,
+                artist,
+                lower(title) as title,
+                0 as rank
+            FROM songs
+            ORDER BY artist, title
+            LIMIT %s
+        """, [limit])
+        return
+
+    cur.execute("""
+        WITH q AS (
+            select to_tsquery('simple', %s) AS q
+        ),
+        results as (
+            SELECT
+                id,
+                artist,
+                lower(title) as title,
+                GREATEST(
+                    ts_rank(to_tsvector('simple', artist || ' ' || title), q),
+                    ts_rank(to_tsvector('simple', title || ' ' || artist), q)
+                ) AS rank
+            FROM songs
+            JOIN q on true
+            WHERE
+                to_tsvector('simple', artist || ' ' || title) @@ q OR
+                to_tsvector('simple', title || ' ' || artist) @@ q
+            LIMIT %s
+        )
+        SELECT
+            *
+        FROM results
+        ORDER BY
+            rank, artist, title
+    """, [tsquery_escape(q), limit])
+
 @app.route("/api/search")
 @crossdomain("*")
 def search():
     cxn = psycopg2.connect("dbname=songs")
     cur = cxn.cursor(cursor_factory=DictCursor)
     try:
-        q = request.args["q"].lower() or "a"
+        q = request.args.get("q", "").lower()
         more = to_bool(request.args.get("more"))
         limit = 250 if more else 25
-        cur.execute("""
-            WITH q AS (
-                select to_tsquery('simple', %s) AS q
-            ),
-            results as (
-                SELECT
-                    id,
-                    artist,
-                    title,
-                    GREATEST(
-                        ts_rank(to_tsvector('simple', artist || ' ' || title), q),
-                        ts_rank(to_tsvector('simple', title || ' ' || artist), q)
-                    ) AS rank
-                FROM songs
-                JOIN q on true
-                WHERE
-                    to_tsvector('simple', artist || ' ' || title) @@ q OR
-                    to_tsvector('simple', title || ' ' || artist) @@ q
-                LIMIT %s
-            )
-            SELECT
-                *
-            FROM results
-            ORDER BY
-                rank, artist, title
-        """, [tsquery_escape(q), limit])
-
+        do_search(cur, q, limit)
         matches = map(dict, cur)
         more_url = (
             request.url + "&more=true" if (not more and len(matches) == limit)
