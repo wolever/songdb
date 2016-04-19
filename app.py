@@ -199,6 +199,7 @@ def do_search(cur, q, limit):
             rank, artist, title
     """, [tsquery_escape(q), limit])
 
+
 @app.route("/api/search")
 @crossdomain("*")
 def search():
@@ -241,6 +242,7 @@ def song(song_id):
 @app.route("/")
 def index():
     return open("index.html").read()
+
 
 if __name__ == "__main__":
     is_dev = not to_bool(os.environ.get("PROD"))

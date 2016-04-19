@@ -113,6 +113,28 @@ export class SongDB {
   }
 }
 
+
+export function favoriteSongs(state={}, action) {
+  if (action.type === "FAVORITE_SONG_ADD") {
+    return {
+      [action.songId]: +(new Date()),
+      ...state
+    };
+  }
+  return state;
+}
+
+favoriteSongs.add = function(song) {
+  return {
+    type: "FAVORITE_SONG_ADD",
+    songId: song.id,
+  };
+};
+
+
+@connect(state => ({
+  favorites: state.favoriteSongs,
+}))
 class ArtistTrackSet extends Component {
   constructor () {
     super();
